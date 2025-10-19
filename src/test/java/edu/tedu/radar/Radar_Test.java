@@ -169,4 +169,15 @@ public class Radar_Test {
         assertEquals(90.0,  radarForParamTest.bearingDeg(0, 0, t90.getX(),  t90.getY()),  1e-9); // 44
         assertEquals(225.0, radarForParamTest.bearingDeg(0, 0, t225.getX(), t225.getY()), 1e-9); // 45
     }
+    // (Assertion 46-47) getId and getMaxRangeKm correctness
+    @Test
+    void gettersReturnConstructorValues() {
+        Radar r = new Radar("R1", 10.0, 0.5);
+
+        assertAll(
+                () -> assertEquals("R1", r.getId()),
+                () -> assertEquals(10.0, r.getMaxRangeKm(), 1e-9)
+        );
+    }
+
 }
