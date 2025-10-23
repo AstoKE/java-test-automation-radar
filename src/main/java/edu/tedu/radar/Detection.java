@@ -21,5 +21,6 @@ public class Detection {
         // Align confidence with your ThreatLevel mapping
         return this.threat == ThreatLevel.HIGH;
     }
+    public ThreatLevel getThreatLevel(){ return threat; }
 
 }

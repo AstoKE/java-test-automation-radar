@@ -12,6 +12,23 @@ public class Radar_Test {
 
     private final Radar radarForParamTest = new Radar("R_Param", 100, 0.5);
 
+    private Target targetAtDistanceWithSnr(String id, double distance, double snr) {
+        double rcs = snr * (1.0 + distance);
+        return new Target(id, distance, 0.0, rcs); // (x=distance, y=0) => distance sabit ve kolay
+    }
+
+    private Target targetForThreat(String id, double distance, double thr, String threatKind) {
+        double eps = 1e-3 * Math.max(1.0, thr);
+        double snr;
+        switch (threatKind) {
+            case "LOW":    snr = thr;                    break;                 // eşik
+            case "MEDIUM": snr = 1.2 * thr + eps;       break;                 // 1.2*thr üstü
+            case "HIGH":   snr = 2.0 * thr + eps;       break;                 // 2*thr üstü
+            default: throw new IllegalArgumentException("Unknown kind: " + threatKind);
+        }
+        return targetAtDistanceWithSnr(id, distance, snr);
+    }
+
     // (Assertion 16-19): Incorporates GeometryParamTest.java (4 assertions)
     @ParameterizedTest
     @CsvSource({
@@ -179,5 +196,48 @@ public class Radar_Test {
                 () -> assertEquals(10.0, r.getMaxRangeKm(), 1e-9)
         );
     }
+    @Test
+    void emptyInput_returnsEmptyList() {
+        Radar r = new Radar("R", 10.0, 0.5);
+        List<Detection> out = r.scan(List.of());
+        assertTrue(out.isEmpty());
+    }
+    @Test
+    void inRangeButBelowThreshold_returnsEmpty() {
+        Radar r = new Radar("R", 10.0, 0.9); // geniş menzil, yüksek eşik
+        Target lowSnr = new Target("L", 1.0, 0.0, 1.0); // rcs=1.0 → snr=0.5 < 0.9
+        List<Detection> out = r.scan(List.of(lowSnr));
+        assertTrue(out.isEmpty(), "SNR eşik altı olduğu için detection olmamalı");
+    }
+    @Test
+    void threat_low_at_threshold() {
+        double thr = 1.0;
+        Radar r = new Radar("R", 10.0, thr);
+        Target t = targetForThreat("L", 1.0, thr, "LOW");
+        var out = r.scan(List.of(t));
+        assertEquals(1, out.size());
+        assertEquals(ThreatLevel.LOW, out.get(0).getThreatLevel());
+    }
+
+    @Test
+    void threat_medium_above_1p2_thr() {
+        double thr = 1.0;
+        Radar r = new Radar("R", 10.0, thr);
+        Target t = targetForThreat("M", 1.0, thr, "MEDIUM");
+        var out = r.scan(List.of(t));
+        assertEquals(1, out.size());
+        assertEquals(ThreatLevel.MEDIUM, out.get(0).getThreatLevel());
+    }
+
+    @Test
+    void threat_high_above_2_thr() {
+        double thr = 1.0;
+        Radar r = new Radar("R", 10.0, thr);
+        Target t = targetForThreat("H", 1.0, thr, "HIGH");
+        var out = r.scan(List.of(t));
+        assertEquals(1, out.size());
+        assertEquals(ThreatLevel.HIGH, out.get(0).getThreatLevel());
+    }
 
 }
+
