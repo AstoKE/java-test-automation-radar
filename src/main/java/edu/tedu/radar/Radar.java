@@ -25,7 +25,9 @@ public class Radar {
                 double snr = t.getRcs() / (1.0 + distance);
                 if (snr >= snrThreshold) {
                     double bearing = bearingDeg(0, 0, t.getX(), t.getY());
-                    ThreatLevel level = evaluateThreat(snr, snrThreshold);
+                    ThreatLevel level = snr > snrThreshold * 2 ? ThreatLevel.HIGH :
+                            snr > snrThreshold * 1.2 ? ThreatLevel.MEDIUM :
+                                    ThreatLevel.LOW;
                     detections.add(new Detection(t.getId(), distance, bearing, snr, level));
                 }
             }
@@ -44,22 +46,4 @@ public class Radar {
     public String getId() { return id; }
     public double getMaxRangeKm() { return maxRangeKm; }
     public double getSnrThreshold() { return snrThreshold; }
-
-    private ThreatLevel evaluateThreat(double snr, double thr) {
-
-        if (Double.isNaN(snr) || Double.isNaN(thr) || thr <= 0) {
-            throw new IllegalArgumentException("Invalid snr/thr");
-        }
-
-        if (snr > 2.0 * thr) return ThreatLevel.HIGH;
-        if (snr > 1.2 * thr) return ThreatLevel.MEDIUM;
-        if (snr >= thr)      return ThreatLevel.LOW;
-
-        // snr < thr ise scan() zaten detection eklemiyor; burada null dönmek yerine
-        // bu durumu üst seviyede filtrelediğimiz için sadece bilgi amaçlı:
-        return null;
-    }
-
 }
-
-

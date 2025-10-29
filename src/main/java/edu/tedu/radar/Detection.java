@@ -21,6 +21,22 @@ public class Detection {
         // Align confidence with your ThreatLevel mapping
         return this.threat == ThreatLevel.HIGH;
     }
-    public ThreatLevel getThreatLevel(){ return threat; }
+
+    public String assessDetectionPriority() {
+        // This logic has 3 decision points, resulting in V(G) = 3 + 1 = 4.
+
+        if (this.threat == ThreatLevel.HIGH && this.distanceKm < 10.0) { // Decision 1 (&& counts as 1)
+            return "PRIORITY_1_INTERCEPT";
+
+        } else if (this.threat == ThreatLevel.HIGH) { // Decision 2
+            return "PRIORITY_2_MONITOR";
+
+        } else if (this.threat == ThreatLevel.MEDIUM && this.snr > 3.0) { // Decision 3 (&& counts as 1)
+            return "PRIORITY_3_TRACK";
+
+        } else {
+            return "PRIORITY_4_LOG";
+        }
+    }
 
 }
